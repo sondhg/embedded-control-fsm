@@ -97,13 +97,11 @@ stateDiagram-v2
     state OperationLevel {
 
 
-            [*] --> Choose_Desired_SP: pressMODEbutton
-
+            [*] --> Operation_Display
+            Operation_Display --> Choose_Desired_SP: pressMODEbutton
             Choose_Desired_SP --> Choose_Alarm_SP: pressMODEbutton
             Choose_Alarm_SP --> Operation_Display: pressMODEbutton
-            Operation_Display --> Choose_Desired_SP: pressMODEbutton
-
-            Operation_Display --> [*]
+            Operation_Display --> [*]: !pressMODEbutton
 
 
             state Choose_Alarm_SP {
