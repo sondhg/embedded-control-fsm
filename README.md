@@ -8,28 +8,15 @@
 stateDiagram-v2
     direction TB
 
-    [*] --> OperationLevel
+    OperationLevel --> OperationLevel: 1s <= timerPressLEVELButton < 3s
+    OperationLevel --> InitialSettingLevel: timerPressLEVELButton >= 3s
+    OperationLevel --> AdjustmentLevel: timerPressLEVELButton < 1s
 
-    state if_state_from_OperationLevel_to_other_levels <<choice>>
+    InitialSettingLevel --> OperationLevel: pressLEVELbutton
+    InitialSettingLevel --> InitialSettingLevel: !pressLEVELbutton
 
-    OperationLevel --> if_state_from_OperationLevel_to_other_levels
-    if_state_from_OperationLevel_to_other_levels  --> OperationLevel: 1s <= timerPressLEVELButton < 3s
-    if_state_from_OperationLevel_to_other_levels --> InitialSettingLevel: timerPressLEVELButton >= 3s
-    if_state_from_OperationLevel_to_other_levels --> AdjustmentLevel: timerPressLEVELButton < 1s
-
-    state if_state_from_InitialSettingLevel_to_OperationLevel <<choice>>
-
-    InitialSettingLevel --> if_state_from_InitialSettingLevel_to_OperationLevel
-
-    if_state_from_InitialSettingLevel_to_OperationLevel --> OperationLevel: pressLEVELbutton
-
-    if_state_from_InitialSettingLevel_to_OperationLevel --> InitialSettingLevel: !pressLEVELbutton
-
-    state if_state_from_AdjustmentLevel_to_OperationLevel <<choice>>
-    AdjustmentLevel --> if_state_from_AdjustmentLevel_to_OperationLevel
-
-    if_state_from_AdjustmentLevel_to_OperationLevel --> OperationLevel: pressLEVELbutton
-    if_state_from_AdjustmentLevel_to_OperationLevel --> AdjustmentLevel: !pressLEVELbutton
+    AdjustmentLevel --> OperationLevel: pressLEVELbutton
+    AdjustmentLevel --> AdjustmentLevel: !pressLEVELbutton
 ```
 
 ### 3 big levels
@@ -41,35 +28,36 @@ stateDiagram-v2
     direction TB
 
     state OperationLevel {
-
-
             [*] --> Operation_Display
             Operation_Display --> Choose_Desired_SP: pressMODEbutton
             Choose_Desired_SP --> Choose_Alarm_SP: pressMODEbutton
             Choose_Alarm_SP --> Operation_Display: pressMODEbutton
-            Operation_Display --> [*]: !pressMODEbutton
 
+            state Operation_Display {
+                [*] --> Display_PV_Value_1stRow
+                Display_PV_Value_1stRow --> Display_SP_Value_2ndRow
+            }
+
+            state Choose_Desired_SP {
+                    [*] --> Display_SP_Text_1stRow
+                    Display_SP_Text_1stRow --> Display_DesiredSP_Value_2ndRow
+                    Display_DesiredSP_Value_2ndRow --> Increase_DesiredSP_Value: pressUPbutton
+                    Increase_DesiredSP_Value --> Display_DesiredSP_Value_2ndRow
+                    Display_DesiredSP_Value_2ndRow --> Decrease_DesiredSP_Value: pressDOWNbutton
+                    Decrease_DesiredSP_Value --> Display_DesiredSP_Value_2ndRow
+                    }
 
             state Choose_Alarm_SP {
-                [*] --> Display_AL_1stRow
-                Display_AL_1stRow --> Display_AlarmValue_2ndRow
-
-                    state if_state_change_alarm_SP_value <<choice>>
-                    Display_AlarmValue_2ndRow --> if_state_change_alarm_SP_value
-                    if_state_change_alarm_SP_value --> Change_AlarmValue: pressUPorDOWNbutton
-                    Change_AlarmValue --> Display_AlarmValue_2ndRow
-                    if_state_change_alarm_SP_value --> [*]: !pressUPorDOWNbutton
+                [*] --> Display_AL_Text_1stRow
+                Display_AL_Text_1stRow --> Display_Alarm_Value_2ndRow
+                Display_Alarm_Value_2ndRow --> Increase_Alarm_Value: pressUPbutton
+                Increase_Alarm_Value --> Display_Alarm_Value_2ndRow
+                Display_Alarm_Value_2ndRow --> Decrease_Alarm_Value: pressDOWNbutton
+                Decrease_Alarm_Value --> Display_Alarm_Value_2ndRow
                 }
-            state Choose_Desired_SP {
-                [*] --> Display_SP_1stRow
-                Display_SP_1stRow --> Display_DesiredSPValue_2ndRow
 
-                    state if_state_change_desired_SP_value <<choice>>
-                    Display_DesiredSPValue_2ndRow --> if_state_change_desired_SP_value
-                    if_state_change_desired_SP_value --> Change_DesiredSPValue: pressUPorDOWNbutton
-                    Change_DesiredSPValue --> Display_DesiredSPValue_2ndRow
-                    if_state_change_desired_SP_value --> [*]: !pressUPorDOWNbutton
-                }
+
+
         }
 ```
 
@@ -80,15 +68,9 @@ stateDiagram-v2
     direction TB
 
     state InitialSettingLevel {
-
             [*] --> Choose_Sensor_Type
             Choose_Sensor_Type --> Choose_Control_Type: pressMODEbutton
             Choose_Control_Type --> Choose_Sensor_Type: pressMODEbutton
-
-
-            Choose_Sensor_Type --> [*]: !pressMODEbutton
-            Choose_Control_Type --> [*]: !pressMODEbutton
-
         }
     }
 ```
@@ -100,19 +82,19 @@ stateDiagram-v2
     direction TB
 
     state AdjustmentLevel {
-        [*] --> Display_ADJ_1stRow
-        Display_ADJ_1stRow --> Choose_PID_Parameters
-        Choose_PID_Parameters --> [*]
+        [*] --> Display_ADJ_Text_1stRow
+        Display_ADJ_Text_1stRow --> Choose_PID_Parameters
 
         state Choose_PID_Parameters {
             [*] --> Choose_P
             Choose_P --> Choose_I: pressMODEbutton
-            Choose_I --> Choose_D: pressMODEbutton
-            Choose_D --> Choose_P: pressMODEbutton
+            Choose_P --> Choose_P: !pressMODEbutton
 
-            Choose_P --> [*]: !pressMODEbutton
-            Choose_I --> [*]: !pressMODEbutton
-            Choose_D --> [*]: !pressMODEbutton
+            Choose_I --> Choose_D: pressMODEbutton
+            Choose_I --> Choose_I: !pressMODEbutton
+
+            Choose_D --> Choose_P: pressMODEbutton
+            Choose_D --> Choose_D: !pressMODEbutton
         }
     }
 ```
@@ -125,14 +107,12 @@ stateDiagram-v2
 stateDiagram-v2
     direction TB
     state Choose_Sensor_Type {
-                [*] --> Display_INT_1stRow
-                Display_INT_1stRow --> Display_SensorTypeValue_2ndRow
-
-                    state if_state_change_sensor_type_Value <<choice>>
-                    Display_SensorTypeValue_2ndRow --> if_state_change_sensor_type_Value
-                    if_state_change_sensor_type_Value --> Change_SensorTypeValue: pressUPorDOWNbutton
-                    Change_SensorTypeValue --> Display_SensorTypeValue_2ndRow
-                    if_state_change_sensor_type_Value --> [*]: !pressUPorDOWNbutton
+                [*] --> Display_INT_Text_1stRow
+                Display_INT_Text_1stRow --> Display_SensorType_Value_2ndRow
+                Display_SensorType_Value_2ndRow --> Increase_SensorType_Value: pressUPbutton
+                Increase_SensorType_Value --> Display_SensorType_Value_2ndRow
+                Display_SensorType_Value_2ndRow --> Decrease_SensorType_Value: pressDOWNbutton
+                Decrease_SensorType_Value --> Display_SensorType_Value_2ndRow
                 }
 ```
 
@@ -142,14 +122,12 @@ stateDiagram-v2
 stateDiagram-v2
     direction TB
      state Choose_Control_Type {
-            [*] --> Display_CNTL_1stRow
-            Display_CNTL_1stRow --> Display_ControlTypeValue_2ndRow
-
-                state if_state_change_control_type <<choice>>
-                Display_ControlTypeValue_2ndRow --> if_state_change_control_type
-                if_state_change_control_type --> Change_ControlTypeValue: pressUPorDOWNbutton
-                Change_ControlTypeValue --> Display_ControlTypeValue_2ndRow
-                if_state_change_control_type --> [*]: !pressUPorDOWNbutton
+            [*] --> Display_CNTL_Text_1stRow
+            Display_CNTL_Text_1stRow --> Display_ControlType_Value_2ndRow
+            Display_ControlType_Value_2ndRow --> Choose_ControlType_PID: pressUPbutton
+            Choose_ControlType_PID --> Display_ControlType_Value_2ndRow
+            Display_ControlType_Value_2ndRow --> Choose_ControlType_ONOFF: pressDOWNbutton
+            Choose_ControlType_ONOFF --> Display_ControlType_Value_2ndRow
             }
 ```
 
@@ -159,14 +137,12 @@ stateDiagram-v2
 stateDiagram-v2
     direction TB
        state Choose_Alarm {
-            [*] --> Display_AL_1stRow
-            Display_AL_1stRow --> Display_AlarmValue_2ndRow
-
-                state if_state_change_alarm_value <<choice>>
-                Display_AlarmValue_2ndRow --> if_state_change_alarm_value
-                if_state_change_alarm_value --> Change_AlarmValue: pressUPorDOWNbutton
-                Change_AlarmValue --> Display_AlarmValue_2ndRow
-                if_state_change_alarm_value --> [*]: !pressUPorDOWNbutton
+            [*] --> Display_AL_Text_1stRow
+            Display_AL_Text_1stRow --> Display_Alarm_Value_2ndRow
+            Display_Alarm_Value_2ndRow --> Increase_Alarm_Value: pressUPbutton
+            Increase_Alarm_Value --> Display_Alarm_Value_2ndRow
+            Display_Alarm_Value_2ndRow --> Decrease_Alarm_Value: pressDOWNbutton
+            Decrease_Alarm_Value --> Display_Alarm_Value_2ndRow
             }
 ```
 
@@ -176,14 +152,12 @@ stateDiagram-v2
 stateDiagram-v2
     direction TB
     state Choose_P {
-        [*] --> Display_P_1stRow
-        Display_P_1stRow --> Display_PValue_2ndRow
-
-            state if_state_change_P_value <<choice>>
-            Display_PValue_2ndRow --> if_state_change_P_value
-            if_state_change_P_value --> Change_PValue: pressUPorDOWNbutton
-            Change_PValue --> Display_PValue_2ndRow
-            if_state_change_P_value --> [*]: !pressUPorDOWNbutton
+        [*] --> Display_P_Text_1stRow
+        Display_P_Text_1stRow --> Display_P_Value_2ndRow
+        Display_P_Value_2ndRow --> Increase_P_Value: pressUPbutton
+        Increase_P_Value --> Display_P_Value_2ndRow
+        Display_P_Value_2ndRow --> Decrease_P_Value: pressDOWNbutton
+        Decrease_P_Value --> Display_P_Value_2ndRow
         }
 ```
 
@@ -191,14 +165,12 @@ stateDiagram-v2
 stateDiagram-v2
     direction TB
     state Choose_I {
-        [*] --> Display_I_1stRow
-        Display_I_1stRow --> Display_IValue_2ndRow
-
-            state if_state_change_I_value <<choice>>
-            Display_IValue_2ndRow --> if_state_change_I_value
-            if_state_change_I_value --> Change_IValue: pressUPorDOWNbutton
-            Change_IValue --> Display_IValue_2ndRow
-            if_state_change_I_value --> [*]: !pressUPorDOWNbutton
+        [*] --> Display_I_Text_1stRow
+        Display_I_Text_1stRow --> Display_I_Value_2ndRow
+        Display_I_Value_2ndRow --> Increase_I_Value: pressUPbutton
+        Increase_I_Value --> Display_I_Value_2ndRow
+        Display_I_Value_2ndRow --> Decrease_I_Value: pressDOWNbutton
+        Decrease_I_Value --> Display_I_Value_2ndRow
         }
 ```
 
@@ -206,21 +178,21 @@ stateDiagram-v2
 stateDiagram-v2
     direction TB
     state Choose_D {
-        [*] --> Display_D_1stRow
-        Display_D_1stRow --> Display_DValue_2ndRow
+        [*] --> Display_D_Text_1stRow
+        Display_D_Text_1stRow --> Display_D_Value_2ndRow
+        Display_D_Value_2ndRow --> Increase_D_Value: pressUPbutton
+        Increase_D_Value --> Display_D_Value_2ndRow
+        Display_D_Value_2ndRow --> Decrease_D_Value: pressDOWNbutton
+        Decrease_D_Value --> Display_D_Value_2ndRow
 
-            state if_state_change_D_value <<choice>>
-            Display_DValue_2ndRow --> if_state_change_D_value
-            if_state_change_D_value --> Change_DValue: pressUPorDOWNbutton
-            Change_DValue --> Display_DValue_2ndRow
-            if_state_change_D_value --> [*]: !pressUPorDOWNbutton
+
         }
 ```
 
 ## Explanation
 
 - The interface has 4 buttons named: LEVEL, MODE, UP, DOWN.
-- There are 8 digits of 7-segment LED being used for display screen. These 8 digits are separated into 2 rows, each row has 4 digits. The 4 digits on the first row is for PV (Process Value = Actual and measured value) and the 4 digits on the second row is for SV (Set Value = Set and desired value).
+- There are 8 digits of 7-segment LED being used for display screen. These 8 digits are separated into 2 rows, each row has 4 digits. The 4 digits on the first row is for PV (Process \_Value = Actual and measured value) and the 4 digits on the second row is for SV (Set \_Value = Set and desired value).
 - LEVEL button: Level setting selection
 - MODE button: Parameter selection
 - UP/DOWN button: Increase/Decrease the value of the selected parameter
