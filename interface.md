@@ -75,7 +75,7 @@ stateDiagram-v2
             Choose_Sensor_Type --> Choose_Control_Type: pressMODEbutton
             Choose_Control_Type --> Choose_Sensor_Type: pressMODEbutton
         }
-    }
+
 ```
 
 #### Choose Sensor Type
@@ -105,21 +105,6 @@ stateDiagram-v2
             Choose_ControlType_PID --> Display_ControlType_Value_2ndRow
             Display_ControlType_Value_2ndRow --> Choose_ControlType_ONOFF: pressDOWNbutton
             Choose_ControlType_ONOFF --> Display_ControlType_Value_2ndRow
-            }
-```
-
-#### Choose Alarm
-
-```mermaid
-stateDiagram-v2
-    direction TB
-       state Choose_Alarm {
-            [*] --> Display_AL_Text_1stRow
-            Display_AL_Text_1stRow --> Display_Alarm_Value_2ndRow
-            Display_Alarm_Value_2ndRow --> Increase_Alarm_Value: pressUPbutton
-            Increase_Alarm_Value --> Display_Alarm_Value_2ndRow
-            Display_Alarm_Value_2ndRow --> Decrease_Alarm_Value: pressDOWNbutton
-            Decrease_Alarm_Value --> Display_Alarm_Value_2ndRow
             }
 ```
 
