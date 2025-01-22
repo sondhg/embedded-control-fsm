@@ -1,20 +1,13 @@
-# FSM of Unit Control
-
 ```mermaid
 stateDiagram-v2
-    state Operating {
-        state AlarmAndTimer {
-            AlarmAndCounter --> ResetAlarmAndCounter: temp < alarmValue
-            ResetAlarmAndCounter --> AlarmAndCounter: temp >= alarmValue
-        }
-        --
-        Running
+direction LR
+    state Running {
+    direction LR
+        [*] --> OnOff
+        OnOff --> PID: method == PID
+        PID --> OnOff: method == OnOff
     }
-
-    state Stop
-
-    Operating --> Stop: pressMODEandUPbutton
-    Stop --> Operating: pressMODEandDOWNbutton
-    Operating --> Stop: temp > alarmValue && timer > 10s
-
+    [*] --> Running
+    Running --> Alarm: temp >= alarmValue
+    Alarm --> Running: temp < alarmValue
 ```

@@ -1,6 +1,5 @@
 #include <iostream>
 
-// Enumeration for different states of the interface
 enum State
 {
     Run = 0,
@@ -9,7 +8,19 @@ enum State
     Change = 3
 };
 
-// Enumeration for button presses
+enum SubState
+{
+    SV = 0,
+    AV = 1,
+    KP = 2,
+    KI = 3,
+    KD = 4,
+    hysteresis = 5,
+    INPUT = 6,
+    OUTPUT = 7,
+    CONTROL = 8
+};
+
 enum Button
 {
     LEVEL = 1,
@@ -18,106 +29,83 @@ enum Button
     DOWN = 4
 };
 
-// Function prototypes for hardware-related functions
-extern void displayPV();        // Display process value on 1st row
-extern void displaySV();        // Display set value on 2nd row
-extern void displayParameter(); // Display parameter name on 1st row and its value on 2nd row
-extern void displaySetting();   // Display setting name on 1st row and its value on 2nd row
-
-// Function to get button press (LEVEL, MODE, UP, DOWN)
 extern int getButtonPress();
 
-// Function to get the duration of the LEVEL button press
-extern int getLevelButtonPressDuration();
+State handleButtonPress(State currentState, State parentState, SubState &subState)
+{
+    int buttonPress = getButtonPress();
 
-// Function representing the interface for the embedded system
+    switch (currentState)
+    {
+    case Run:
+        if (buttonPress == LEVEL)
+        {
+            subState = SV; // Reset substate to SV when entering Parameter state
+            return Parameter;
+        }
+        break;
+
+    case Parameter:
+        if (buttonPress == UP || buttonPress == DOWN)
+        {
+            return Change;
+        }
+        else if (buttonPress == LEVEL)
+        {
+            subState = INPUT; // Reset substate to INPUT when entering Setting state
+            return Setting;
+        }
+        else if (buttonPress == MODE)
+        {
+            subState = static_cast<SubState>((subState + 1) % 6);
+        }
+        break;
+
+    case Setting:
+        if (buttonPress == UP || buttonPress == DOWN)
+        {
+            return Change;
+        }
+        else if (buttonPress == LEVEL)
+        {
+            return Run;
+        }
+        else if (buttonPress == MODE)
+        {
+            subState = static_cast<SubState>((subState + 1) % 3 + 6);
+        }
+        break;
+
+    case Change:
+
+        if (buttonPress == MODE)
+        {
+            return parentState;
+        }
+        break;
+
+    default:
+        return Run;
+    }
+
+    return currentState;
+}
+
 void interface()
 {
-    State state = Run;          // Initialize state to Run
-    State parentState = Run;    // Variable to store the parent state before entering Change state
-    int buttonPress = 0;        // Variable to store button press actions
-    int levelPressDuration = 0; // Variable to store the duration of LEVEL button press
+    State state = Run;
+    State parentState = Run;
+    SubState subState = SV;
 
-    while (true) // Infinite loop to keep the interface running
+    while (true)
     {
-        switch (state)
+        State newState = handleButtonPress(state, parentState, subState);
+
+        if (newState == Change)
         {
-        case Run:
-            displaySV(); // Display set value
-            displayPV(); // Display process value
-
-            // Simulate button press actions
-            buttonPress = getButtonPress();                     // Function to get button press (LEVEL, MODE, UP, DOWN)
-            levelPressDuration = getLevelButtonPressDuration(); // Get the duration of LEVEL button press
-
-            if (buttonPress == LEVEL && levelPressDuration >= 3) // LEVEL button pressed for >= 3s
-            {
-                state = Parameter;
-            }
-            else if (buttonPress == LEVEL && levelPressDuration < 3) // LEVEL button pressed for < 3s
-            {
-                state = Setting;
-            }
-            break;
-
-        case Parameter:
-            displayParameter(); // Display parameter values
-
-            // Simulate button press actions
-            buttonPress = getButtonPress(); // Function to get button press (LEVEL, MODE, UP, DOWN)
-
-            if (buttonPress == UP || buttonPress == DOWN) // UP/DOWN button pressed
-            {
-                parentState = Parameter;
-                state = Change;
-            }
-            else if (buttonPress == LEVEL) // LEVEL button pressed
-            {
-                state = Run;
-            }
-            break;
-
-        case Setting:
-            displaySetting(); // Display setting values
-
-            // Simulate button press actions
-            buttonPress = getButtonPress(); // Function to get button press (LEVEL, MODE, UP, DOWN)
-
-            if (buttonPress == UP || buttonPress == DOWN) // UP/DOWN button pressed
-            {
-                parentState = Setting;
-                state = Change;
-            }
-            else if (buttonPress == LEVEL) // LEVEL button pressed
-            {
-                state = Run;
-            }
-            break;
-
-        case Change:
-            // Simulate button press actions
-            buttonPress = getButtonPress(); // Function to get button press (LEVEL, MODE, UP, DOWN)
-
-            if (buttonPress == MODE) // MODE button pressed
-            {
-                state = Run;
-            }
-            else if (buttonPress == LEVEL) // LEVEL button pressed
-            {
-                if (parentState == Parameter)
-                {
-                    state = Parameter;
-                }
-                else if (parentState == Setting)
-                {
-                    state = Setting;
-                }
-            }
-            break;
-
-        default:
-            state = Run; // Default state
-            break;
+            parentState = state;
         }
+
+        state = newState;
     }
 }
